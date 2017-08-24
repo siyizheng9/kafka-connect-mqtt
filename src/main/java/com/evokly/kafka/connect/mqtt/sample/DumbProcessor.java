@@ -28,8 +28,11 @@ public class DumbProcessor implements MqttMessageProcessor {
 
     @Override
     public SourceRecord[] getRecords(String kafkaTopic) {
+        String topic = "{ \"mTopic\": " + "\"" + mTopic.toString() + "\"}";
+        String message = "{ \"mMessage\": " + "\"" + mMessage.toString() + "\"}";
+
         return new SourceRecord[]{new SourceRecord(null, null, kafkaTopic, null,
-                Schema.STRING_SCHEMA, mTopic,
-                Schema.BYTES_SCHEMA, mMessage.getPayload())};
+                Schema.STRING_SCHEMA, topic,
+                Schema.STRING_SCHEMA, message)};
     }
 }
