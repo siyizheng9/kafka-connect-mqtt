@@ -41,6 +41,7 @@ public class MqttSourceTask extends SourceTask implements MqttCallback {
     String mMqttClientId;
     BlockingQueue<MqttMessageProcessor> mQueue = new LinkedBlockingQueue<>();
     MqttSourceConnectorConfig mConfig;
+    MqttConnectOptions connectOptions;
 
     /**
      * Get the version of this task. Usually this should be the same as the corresponding
@@ -74,7 +75,7 @@ public class MqttSourceTask extends SourceTask implements MqttCallback {
 
 
         // Setup MQTT Connect Options
-        MqttConnectOptions connectOptions = new MqttConnectOptions();
+        connectOptions = new MqttConnectOptions();
 
         String sslCa = mConfig.getString(MqttSourceConstant.MQTT_SSL_CA_CERT);
         String sslCert = mConfig.getString(MqttSourceConstant.MQTT_SSL_CERT);
@@ -189,6 +190,41 @@ public class MqttSourceTask extends SourceTask implements MqttCallback {
     @Override
     public void connectionLost(Throwable cause) {
         log.error("MQTT connection lost!", cause);
+
+        while(true){
+
+            // Connect to Broker
+            try {
+                mClient.connect(connectOptions);
+
+                log.info("[{}] Connected to Broker", mMqttClientId);
+            } catch (MqttException e) {
+                log.error("[{}] Connection to Broker failed!", mMqttClientId, e);
+            }
+
+            // Setup topic
+            try {
+                String topic = mConfig.getString(MqttSourceConstant.MQTT_TOPIC);
+                Integer qos = mConfig.getInt(MqttSourceConstant.MQTT_QUALITY_OF_SERVICE);
+
+                mClient.subscribe(topic, qos);
+
+                log.info("[{}] Subscribe to '{}' with QoS '{}'", mMqttClientId, topic,
+                        qos.toString());
+                break;
+            } catch (MqttException e) {
+                log.error("[{}] Subscribe failed! ", mMqttClientId, e);
+            }
+
+            try
+            {
+                Thread.sleep(1000);
+            }
+            catch(InterruptedException ex)
+            {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**
