@@ -29,7 +29,9 @@ public class DumbProcessor implements MqttMessageProcessor {
     @Override
     public SourceRecord[] getRecords(String kafkaTopic) {
         String topic = "{ \"mTopic\": " + "\"" + mTopic.toString() + "\"}";
-        String message = "{ \"mMessage\": " + "\"" + mMessage.toString() + "\"}";
+        String clientId = mTopic.toString().split("/")[2];
+        String message = "{" + "\"client_id\": " + "\"" + clientId + "\"" + "," +
+                "\"mMessage\": " + "\"" + mMessage.toString() + "\"}";
 
         return new SourceRecord[]{new SourceRecord(null, null, kafkaTopic, null,
                 Schema.STRING_SCHEMA, topic,
